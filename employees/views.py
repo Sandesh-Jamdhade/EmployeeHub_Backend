@@ -3,24 +3,23 @@ from rest_framework.response import Response
 from .models import Employee
 from .serializers import EmployeeSerializer
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 
 @api_view(['POST'])
 def login_api(request):
     username = request.data.get("username")
+    password = request.data.get("password")
 
-    try:
-        user = User.objects.get(username=username)
+    user = authenticate(username=username, password=password)
 
-        print("LOGGED USER:", user.username)
-        print("IS SUPERUSER:", user.is_superuser)
-
+    if user is not None:
         return Response({
             "success": True,
             "is_admin": user.is_superuser
         })
 
-    except User.DoesNotExist:
-        return Response({"success": False}, status=401)
+    return Response({"success": False}, status=401)
+
 
 @api_view(['POST'])
 def register_api(request):
