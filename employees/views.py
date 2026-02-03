@@ -2,7 +2,51 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Employee
 from .serializers import EmployeeSerializer
+from django.contrib.auth.models import User
 
+@api_view(['POST'])
+def login_api(request):
+    username = request.data.get("username")
+
+    try:
+        user = User.objects.get(username=username)
+
+        print("LOGGED USER:", user.username)
+        print("IS SUPERUSER:", user.is_superuser)
+
+        return Response({
+            "success": True,
+            "is_admin": user.is_superuser
+        })
+
+    except User.DoesNotExist:
+        return Response({"success": False}, status=401)
+
+@api_view(['POST'])
+def register_api(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    if not username or not password:
+        return Response({"error": "Missing fields"}, status=400)
+
+    if User.objects.filter(username=username).exists():
+        return Response({"error": "User already exists"}, status=400)
+
+    user = User.objects.create_user(
+        username=username,
+        password=password
+    )
+
+    return Response({"success": True})
+
+
+@api_view(['GET'])
+def is_admin(request):
+    if request.user.is_authenticated and request.user.is_superuser:
+        return Response({"is_admin": True})
+
+    return Response({"is_admin": False})
 
 @api_view(['GET'])
 def employee_list(request):
